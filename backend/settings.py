@@ -61,6 +61,7 @@ CORS_ALLOW_CREDENTIALS = True
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
 CORS_ORIGIN_WHITELIST = (
     'localhost:3000',
+    'https://test-281.herokuapp.com/',
 )
 
 ROOT_URLCONF = 'backend.urls'
