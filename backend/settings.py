@@ -29,6 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'test-281.herokuapp.com',
+    'localhost'
 ]
 
 
