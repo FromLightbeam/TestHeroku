@@ -29,7 +29,7 @@ urlpatterns = [
     path('match-csv', MatchCSVView.as_view()),
     path('match-json', MatchJSONView.as_view()),
     path('metric-csv', MetricCSVView.as_view()),
-    path('bulk-match', BulkMatchView.as_view())
+    path('bulk-match/<config>', BulkMatchView.as_view())
 ] + router.urls
 
 # urlpatterns = [

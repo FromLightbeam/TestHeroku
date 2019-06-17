@@ -219,14 +219,25 @@ class MatchJSONView(APIView):
         return Response('dobryi vecher')
 
 class BulkMatchView(APIView):
-    def post(self, request, format=None):
+    def post(self, request, format=None, *args, **kwargs):
+        name = kwargs['config']
+        config = get_or_create(ConfigParser, {'name': name})
         requried_fields = {
-            'date': 'date',
-            'club_1': 'team_h',
-            'club_2': 'team_a',
-            'league': 'league',
-            'season': 'season'
+            'date': config.dateField,
+            'club_1': config.club1Field,
+            'club_2': config.club2Field
         }
+        isLeagueField = bool(config.leagueField)
+        isSeasonField = bool(config.seasonField)
+        if isLeagueField:
+            requried_fields['league'] = config.leagueField
+        if isSeasonField:
+            requried_fields['season'] = config.seasonField
+        exclude = config.metricsExclude.split(',')
+        
+        print(requried_fields)
+        print(exclude)
+
         # TODO Dry
         csv_file = request.data['file'].read().decode('utf-8')
         data = pd.read_csv(StringIO(csv_file))
@@ -240,8 +251,8 @@ class BulkMatchView(APIView):
         match_metrics = []
 
         for index, row in data.iterrows():
-            league = get_or_create(League, { 'name': row[requried_fields['league']] })
-            season = get_or_create(Season, { 'name': row[requried_fields['season']] })
+            league = get_or_create(League, { 'name': row[requried_fields['league']] if isLeagueField else config.leagueName })
+            season = get_or_create(Season, { 'name': row[requried_fields['season']] if isSeasonField else config.seasonName })
             club_1 = get_or_create(Club, {'name': row[requried_fields['club_1']] })
             club_2 = get_or_create(Club, {'name': row[requried_fields['club_2']] })
 
@@ -249,14 +260,14 @@ class BulkMatchView(APIView):
             # season = Season.objects.get(name=row[requried_fields['season']])
             # club_1 = Club.objects.get(name=row[requried_fields['club_1']])
             # club_2 = Club.objects.get(name=row[requried_fields['club_2']])
-
+            date = row[requried_fields['date']].split()[0]
             args = {
-                'id': row['id'],
+                'id': hash(club_1.name + club_2.name + date) % 2147483647,
                 'club_1': club_1,
                 'club_2': club_2,
                 'league': league,
                 'season': season,
-                'date': row[requried_fields['date']].split()[0]
+                'date': date
             }
             # print(args)
             match = Match(**args)
@@ -272,5 +283,6 @@ class BulkMatchView(APIView):
                        
         Match.objects.bulk_create(matches)
         MatchMetric.objects.bulk_create(match_metrics)
+
 
         return Response('dobryi vecher')
