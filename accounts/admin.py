@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Profile, Club, Match, Action, MatchAction, Metric, MatchMetric, League, Season
+from .models import Profile, Club, Match, Action, MatchAction, Metric, MatchMetric, League, Season, ConfigParser
 
-admin.site.register((Profile, Club, Action, League, Season, MatchMetric))
+admin.site.register((Profile, Club, Action, League, Season, MatchMetric, ConfigParser))
 
 @admin.register(Metric)
 class MetricAdmin(admin.ModelAdmin):

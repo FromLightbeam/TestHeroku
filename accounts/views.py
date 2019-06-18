@@ -246,13 +246,20 @@ class BulkMatchView(APIView):
         # TODO sep func need
         for field in data.columns.values:
             if not field in requried_fields.values():
-                metrics.append(get_or_create(Metric, { 'shortname': field }))
+                if not field in exclude:
+                    metrics.append(get_or_create(Metric, { 'shortname': field }))
         matches = []
         match_metrics = []
 
         for index, row in data.iterrows():
+            raw_season = str(row[requried_fields['season']] if isSeasonField else config.seasonName)
+            print(type(raw_season))
+            print(raw_season)
+            if raw_season[0:2] == '20':
+                temp = int(raw_season[2:4])
+                raw_season = '{0}/{1}'.format(temp, temp + 1)
             league = get_or_create(League, { 'name': row[requried_fields['league']] if isLeagueField else config.leagueName })
-            season = get_or_create(Season, { 'name': row[requried_fields['season']] if isSeasonField else config.seasonName })
+            season = get_or_create(Season, { 'name': raw_season })
             club_1 = get_or_create(Club, {'name': row[requried_fields['club_1']] })
             club_2 = get_or_create(Club, {'name': row[requried_fields['club_2']] })
 
@@ -260,7 +267,16 @@ class BulkMatchView(APIView):
             # season = Season.objects.get(name=row[requried_fields['season']])
             # club_1 = Club.objects.get(name=row[requried_fields['club_1']])
             # club_2 = Club.objects.get(name=row[requried_fields['club_2']])
-            date = row[requried_fields['date']].split()[0]
+            if config.dateFormat == 'datetime':
+                date = row[requried_fields['date']].split()[0]
+            elif config.dateFormat == 'date':
+                date = row[requried_fields['date']]
+
+            print(club_1.name)
+            print(club_2.name)
+            print(date)
+            print(club_1.name + club_2.name + date)
+            print(hash(club_1.name + club_2.name + date) % 2147483647)
             args = {
                 'id': hash(club_1.name + club_2.name + date) % 2147483647,
                 'club_1': club_1,
@@ -271,7 +287,11 @@ class BulkMatchView(APIView):
             }
             # print(args)
             match = Match(**args)
-            matches.append(match)
+            try:
+                Match.objects.get(id=match.id)
+            except Match.DoesNotExist:
+                matches.append(match)
+
             for metric in metrics:
                 match_metrics.append(
                     MatchMetric(

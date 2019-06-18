@@ -146,6 +146,9 @@ class ConfigParser(models.Model):
     club2Field = models.CharField(max_length=50, blank=True)
     metricsExclude = models.TextField(blank=True)
 
+    def __str__(self):
+        return str(self.name)
+
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
